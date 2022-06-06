@@ -1,104 +1,124 @@
-import fs from 'fs';
+import fs from 'fs'
 
-const baseProd = JSON.parse( fs.readFileSync( './products.json' ) )
-const jsonFile = 'products.json';
-
-class Productos{
-
-  constructor ( productos )
-  {
-    this.productosArray = productos;
-  }
-
-  async write ( params )
-  {
-    const nuevoProducto = JSON.stringify( params, null, 2 )
-    await fs.promises.writeFile( jsonFile, nuevoProducto, 'utf8' );
-  }
+//archivo para leer
+let productsList = JSON.parse(fs.readFileSync('./productos.json'))
 
 
-//-save(Object): Number - Recibe un objeto, lo guarda en el archivo, devuelve el id asignado
-
-async save ( obj )
-  {
-    try {
-      const data = JSON.parse( await fs.promises.readFile( 'productos.json', 'utf8' ) )
-      const productosArray = data;
-      productosArray.push( obj );
-      let id = 0
-
-     
-      productosArray.forEach( ( producto ) =>
-      {
-        if ( producto.id > id ) id = producto.id
-
-      } )
-
-      obj.id = id + 1
-      await fs.promises.writeFile( jsonFile, JSON.stringify( productosArray, null, 2 ) );
-
-    } catch ( err ) {
-      console.log( err )
-    }
-  }
-
-
-//getById(Number): Object - Recibe un id y devuelve el objeto con ese id, o null si no está.
-
-  async getById ( idNumber )
-  {
-    try {
-      const data = JSON.parse( await fs.promises.readFile( jsonFile, 'utf8' ) )
-      this.productosArray = data;
-
-      const producto = this.productosArray.find( ( producto ) => producto.id === idNumber )
-      if ( producto ) console.log( producto )
-
-      else console.log( 'No se encontro el producto' )
-
-    } catch ( err ) {
-      console.log( err )
-    }
-
-  }
-
-//getAll(): Object[] - Devuelve un array con los objetos presentes en el archivo.
-
-  async getAll ( _title)
-  {
-    const data = await fs.promises.readFile( jsonFile )
-    const products = JSON.parse( data )
-
-    if ( products.length ) {
-      const todosLosProductos = products.map( ( producto ) => producto )
-      console.log( todosLosProductos )
-    } 
-    else {
-      console.log( 'No hay productos' )
-    }
-  }
-
-
-//deleteAll(): void - Elimina todos los objetos presentes en el archivo.
-async deleteAll ()
-  {
-    try {
-      const data = JSON.parse( await fs.promises.readFile( jsonFile, 'utf8' ) )
-      if ( data.length ) {
-        this.write( [] )
-        console.log( 'Todos los archivos fueron borrados ' )
-      } else {
-        console.log( 'No hay productos para borrar' )
-      }
-
-    } catch ( err ) {
-      console.log( err )
-    }
-  }
-
-
+//prodcutos
+const product1 = {
+	title: "escuadra",
+  price: 700,
+  thumbnail:"http://http2.mlstatic.com/D_656522-MLA44388481439_122020-I.jpg"
+}
+const product2 = {
+	title: "globo terraqueo",
+  price: 3000,
+  thumbnail:"http://http2.mlstatic.com/D_920961-MLA31579848144_072019-I.jpg"
+}
+const product3 = {
+title: "calculadora",
+price: 1500,
+thumbnail:"http://http2.mlstatic.com/D_875724-MLA31116238699_062019-O.jpg"
 }
 
-await Productos.getById(  )
-//Productos.getAll()
-//Productos.deleteAll()
+class Contenedor {
+  constructor(filename) {
+    this.filename = filename;
+  }
+
+
+//recibe un objeto, lo guarda en el archivo y devuelve el id asignado
+	async save(obj) {
+		try {
+			let readJson = await fs.promises.readFile('./productos.json', 'utf-8') 
+
+			let jsonParsed = await JSON.parse(readJson)
+			jsonParsed.push(obj)
+			readJson = await fs.promises.writeFile(
+				'./productos.json',
+				JSON.stringify(jsonParsed, null, 2),
+				'utf-8'
+			)
+
+			let id = 0
+
+			jsonParsed.map((producto) => {
+				if (producto.id > id) id = producto.id
+			})
+
+			obj.id = id + 1
+			await fs.promises.writeFile(
+				'./productos.json',
+				JSON.stringify(jsonParsed, null, 2)
+			)
+		} catch (err) {
+			throw new Error(`esto es un error: ${err.message}`)
+		}
+	}
+
+
+//recibe un id y devuelve el objeto con ese id o null si no está
+
+	getById(id) {
+		let idReturned
+
+		if (this.filename) {
+			idReturned = this.filename.find((prod) => prod.id === id)
+			console.log(idReturned || null)
+		}
+	}
+
+
+//devuelve un array con los objetos presentes en el archivo
+
+	getAll() {
+		if (this.filename) {
+			const allProducts = [...this.filename]
+			console.log(allProducts)
+		} else {
+			console.log('aún hay productos en el archivo')
+		}
+	}
+
+
+//Elimina del archivo el objeto con el id buscado
+	async deleteById(removeId) {
+		try {
+			const newData = this.filename.findIndex((prod) =>
+				prod.id === removeId ? true : false
+			)
+
+			const removed = this.filename.splice(newData, 1)
+			console.log(removed)
+
+			await fs.promises.writeFile(
+				'./productos.json',
+				JSON.stringify(this.filename, null, 2),
+				'utf-8'
+			)
+
+			console.log(this.filename)
+		} catch (err) {
+			throw new Error(`esto es un error: ${err.message}`)
+		}
+	}
+
+//Elimina todos los objetos presentes en el archivo
+	async deleteAll() {
+		try {
+			await fs.promises.writeFile('./productos.json', '[]', 'utf-8')
+		} catch (err) {
+			throw new Error(`esto es un error: ${err.message}`)
+		}
+	}
+}
+
+const productos = new Contenedor(productsList)
+
+// productos.save(product1)
+// productos.save(product2)
+// productos.save(product3)
+// productos.getById(2)
+// productos.getAll()
+// productos.deleteById(1)
+// productos.deleteAll()
